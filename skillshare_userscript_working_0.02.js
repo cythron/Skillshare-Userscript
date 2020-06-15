@@ -1,24 +1,13 @@
 // ==UserScript==
-// @name        Skillshare Keyboard Shortcuts for Video 
+// @name        Skillshare Keyboard Shortcuts for Video 3
 // @namespace   Violentmonkey Scripts
 // @match       https://www.skillshare.com/classes/*
 // @grant       none
-// @version     0.02
+// @version     0.03
 // @author      cythron
-// @description 6/15/2020, 13:15:27 PM
+// @description 6/15/2020, 13:51:30 PM
 // unsafemethod setup
 // ==/UserScript==
-
-/* Currently available features:
-1. Seek using arrow keys
-2. Play/Pause using spacebar
-
-Todo
-1. Youtube-like num key seek (1-> 10%, 5->50%)
-2. Toggle CC
-3. Volume Controls
-4. Special Shortcuts (Ctrl+G -> Go to specific time)
-*/
 
 window.addEventListener('load', function() {
 
@@ -31,6 +20,9 @@ window.addEventListener('load', function() {
 	var btnVideoZoom = document.getElementsByClassName('playlist-close-button')[0];
 
 	var vjs = document.getElementById('vjs_video_3');
+  var captions = document.querySelectorAll('.vjs-transcript-mode')[0];
+  var playbackSpeedUI = document.querySelectorAll('.vjs-play-speed')[0];
+  var muteButton = document.querySelectorAll('.vjs-mute-control')[0];
 
 	var currentTime = () => {
 		return controls.currentTime;
@@ -74,23 +66,38 @@ window.addEventListener('load', function() {
 		localStorage.setItem('currentVideoIndex', currentVideoIndex);
 	}
 
+  // Need to bind with the keyboard shortcut
 	function jumpToTime(time) {
 	if (time !== 'undefined')
 		controls.fastSeek(time);
 	else
 		console.log('Invalid Time!');
 	}
+  
+  window.toggleCaptionShow = function() {
+    captions.click();
+  }
+  
+  window.youtubeLikeSeek = function() {
+    return;
+  }
 
-	window.seekForward30 = function {
+	window.seekForward30 = function() {
 		jumpToTime(currentTime() + 30);
 	}
 
-	window.seekBackward30 = function {
+	window.seekBackward30 = function() {
 		jumpToTime(currentTime() - 30);
 	}
 
-	window.changePlaybackSpeed = function {
-		
+	window.changePlaybackSpeed = function(op){
+		if (op == 1)
+      controls.playbackRate += 0.5;
+    else
+      controls.playbackRate -= 0.5;
+    
+    // update UI
+    playbackSpeedUI.textContent=controls.playbackRate + 'x';
 	}
 
 	window.seekForward10 = function () {
@@ -100,6 +107,19 @@ window.addEventListener('load', function() {
 	window.seekBackward10 = function() {
 		jumpToTime(currentTime() - 10);
 	}
+  
+  window.changeVolume = function(op) {
+    if (op == 1)
+      controls.volume += 0.1;
+    else if (op == -1)
+      controls.volume -= 0.1;
+    else if (op == 0) {
+      muteButton.click();
+      console.log('Flipped Muted Value!')
+    }
+    else
+      console.log('Invalid Volume Level')
+  }
 
 	function setup() {
 		controls.addEventListener('keydown', (e) => {
@@ -116,9 +136,21 @@ window.addEventListener('load', function() {
 		  if (e.key == ">")
 			seekForward30();
 		  if (e.key == "<")
-			seekForward30();
+			seekBackward30();
 		  if (e.key == "ArrowLeft")
 			seekBackward10();
+      if (e.key == "ArrowUp")
+			changeVolume(1);
+      if (e.key == "ArrowDown")
+			changeVolume(-1);
+      if (e.key == "+")
+			changeVolume(1);
+      if (e.key == "-")
+			changeVolume(-1);
+      if (e.key == "m")
+			changeVolume(0);
+      if (e.key == "c")
+			toggleCaptionShow();
 		});
 	}
 
